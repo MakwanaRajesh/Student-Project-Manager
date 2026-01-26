@@ -36,7 +36,13 @@ export async function GET() {
       SELECT
         pm.ProjectMeetingID,
         pm.ProjectGroupID,
+
+        pg.ProjectGroupName,
+        pg.ProjectTitle,
+
+        s.StaffID AS GuideStaffID,
         s.StaffName AS GuideStaffName,
+
         pm.MeetingDateTime,
         pm.MeetingPurpose,
         pm.MeetingLocation,
@@ -45,7 +51,9 @@ export async function GET() {
         pm.MeetingStatusDescription,
         pm.MeetingStatusDatetime,
         pm.Description
+
       FROM ProjectMeeting pm
+      JOIN ProjectGroup pg ON pg.ProjectGroupID = pm.ProjectGroupID
       JOIN Staff s ON s.StaffID = pm.GuideStaffID
       ORDER BY pm.MeetingDateTime DESC
     `);

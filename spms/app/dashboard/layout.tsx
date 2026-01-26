@@ -6,6 +6,7 @@ import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { useAppStore } from "@/lib/store"
+import { SessionProvider } from "next-auth/react"
 
 export default function DashboardLayout({
   children,

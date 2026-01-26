@@ -243,8 +243,11 @@ interface Meeting {
   id: string
   groupId: string
   guideStaffId: string
+  GuideStaffName: string
   dateTime: string
   purpose: string
+  ProjectGroupName: string
+  ProjectTitle: string
   location: string
   status: "scheduled" | "completed" | "cancelled"
   attendance: { isPresent: boolean }[]
@@ -269,6 +272,9 @@ export default function AdminMeetingsPage() {
           id: m.ProjectMeetingID,
           groupId: m.ProjectGroupID,
           guideStaffId: m.GuideStaffID,
+          GuideStaffName: m.GuideStaffName,
+          ProjectGroupName: m.ProjectGroupName,
+          ProjectTitle: m.ProjectTitle,
           dateTime: m.MeetingDateTime,
           purpose: m.MeetingPurpose,
           location: m.MeetingLocation,
@@ -291,7 +297,7 @@ export default function AdminMeetingsPage() {
       const group = projectGroups.find((g) => g.id === m.groupId)
       const matchesSearch =
         m.purpose.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.ProjectGroupName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.location.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = statusFilter === "all" || m.status === statusFilter
       return matchesSearch && matchesStatus
@@ -431,7 +437,7 @@ export default function AdminMeetingsPage() {
                           <div>
                             <h4 className="font-medium">{meeting.purpose}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {group?.name} - {group?.projectTitle}
+                              {meeting.ProjectGroupName} - {meeting.ProjectTitle}
                             </p>
                           </div>
                         </div>
@@ -465,9 +471,9 @@ export default function AdminMeetingsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-xs">{guide?.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="text-xs">{meeting.GuideStaffName.charAt(4)}</AvatarFallback>
                           </Avatar>
-                          {guide?.name}
+                          {meeting.GuideStaffName}
                         </div>
                         {meeting.status === "completed" && (
                           <div className="flex items-center gap-2">
