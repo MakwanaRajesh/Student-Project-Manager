@@ -33,8 +33,8 @@ function getRedirectPath(role: UserRole): string {
       return "/dashboard/faculty"
     case "admin":
       return "/dashboard/admin"
-    // default:
-    //   return "/dashboard"
+    default:
+      return "/login"
   }
 }
 
@@ -77,23 +77,23 @@ export default function LoginPage() {
         return
       }
 
-      // login({
-      //   id: data.user.id,
-      //   name: email.split("@")[0], // simple display name
-      //   email: data.user.email,
-      //   role: data.user.role,
-      // })
+      login({
+        id: data.user.id,
+        name: email.split("@")[0], // simple display name
+        email: data.user.email,
+        role: data.user.role,
+      })
 
 
-      localStorage.setItem(
-        "spms_user",
-        JSON.stringify({
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
-        })
-      )
+      // localStorage.setItem(
+      //   "spms_user",
+      //   JSON.stringify({
+      //     id: data.user.id,
+      //     name: data.user.name,
+      //     email: data.user.email,
+      //     role: data.user.role,
+      //   })
+      // )
 
       router.push(getRedirectPath(data.user.role))
 
