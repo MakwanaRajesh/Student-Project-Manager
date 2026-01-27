@@ -1,21 +1,74 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db } from "@/lib/db"
+import { NextResponse } from "next/server"
 
-export async function GET() {
-  const [rows] = await db.query("SELECT * FROM ProjectGroupMember");
-  return NextResponse.json(rows);
+/* =====================================
+   GET: All members OR by ProjectGroupID
+===================================== */
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const groupId = searchParams.get("groupId")
+
+    let query = `
+      SELECT
+        pgm.ProjectGroupMemberID,
+        pgm.ProjectGroupID,
+        pg.ProjectGroupName,
+        pgm.StudentID,
+        s.StudentName,
+        pgm.IsGroupLeader,
+        pgm.StudentCGPA,
+        pgm.Description,
+        pgm.Created
+      FROM ProjectGroupMember pgm
+      JOIN Student s ON s.StudentID = pgm.StudentID
+      JOIN ProjectGroup pg ON pg.ProjectGroupID = pgm.ProjectGroupID
+    `
+
+    const params: any[] = []
+
+    if (groupId) {
+      query += " WHERE pgm.ProjectGroupID = ?"
+      params.push(groupId)
+    }
+
+    const [rows] = await db.query(query, params)
+    return NextResponse.json(rows)
+  } catch (error) {
+    console.error("ProjectGroupMember GET error:", error)
+    return NextResponse.json({ error: "Failed to fetch group members" }, { status: 500 })
+  }
 }
 
+/* =====================================
+   POST: Add student to group
+===================================== */
 export async function POST(req: Request) {
-  const { ProjectGroupID, StudentID, IsGroupLeader, StudentCGPA } =
-    await req.json();
+  try {
+    const body = await req.json()
+    const {
+      ProjectGroupID,
+      StudentID,
+      IsGroupLeader,
+      StudentCGPA,
+      Description
+    } = body
 
-  await db.query(
-    `INSERT INTO ProjectGroupMember
-     (ProjectGroupID, StudentID, IsGroupLeader, StudentCGPA)
-     VALUES (?,?,?,?)`,
-    [ProjectGroupID, StudentID, IsGroupLeader, StudentCGPA]
-  );
+    const [result]: any = await db.query(
+      `
+      INSERT INTO ProjectGroupMember
+      (ProjectGroupID, StudentID, IsGroupLeader, StudentCGPA, Description)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [ProjectGroupID, StudentID, IsGroupLeader, StudentCGPA, Description]
+    )
 
-  return NextResponse.json({ message: "Group Member Added" });
+    return NextResponse.json({
+      message: "Student added to group successfully",
+      ProjectGroupMemberID: result.insertId
+    })
+  } catch (error) {
+    console.error("ProjectGroupMember POST error:", error)
+    return NextResponse.json({ error: "Failed to add group member" }, { status: 500 })
+  }
 }

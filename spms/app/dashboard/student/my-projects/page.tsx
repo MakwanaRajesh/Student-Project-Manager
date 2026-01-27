@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { FolderKanban, Users, Eye, CheckCircle, Clock, XCircle } from "lucide-react"
@@ -11,8 +12,44 @@ import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAppStore } from "@/lib/store"
 
+export interface MyProject {
+  id: number
+  name: string
+  projectTitle: string
+  projectArea: string
+  projectTypeId: number
+  projectTypeName: string
+  guideStaffName: string
+  averageCpi: number
+  membersCount: number
+  status: "approved" | "pending" | "rejected"
+}
+
 export default function StudentMyProjectsPage() {
   const { user, projectGroups, students, staff, projectTypes } = useAppStore()
+
+  const [myProject, setMyProject] = useState<MyProject[]>([]);
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    async function fetchMyProject() {
+      try {
+        const res = await fetch("/api/project-groups")
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch My Project")
+        }
+        const data: MyProject[] = await res.json()
+        setMyProject(data)
+      } catch (error) {
+        setError("Something wen wrong while loading my project")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchMyProject()
+  }, [])
 
   const currentStudent = students.find((s) => s.email === user?.email) || students[0]
   const myGroups = projectGroups.filter((group) => group.members.some((m) => m.studentId === currentStudent?.id))
@@ -30,6 +67,12 @@ export default function StudentMyProjectsPage() {
     }
   }
 
+  const stats = {
+    total: myProject.length,
+    approved: projectGroups.filter((g) => g.status === "approved").length,
+    pending: projectGroups.filter((g) => g.status === "pending").length,
+  }
+
   return (
     <div className="min-h-screen">
       <Header title="My Projects" description="View and manage your project groups" />
@@ -44,7 +87,7 @@ export default function StudentMyProjectsPage() {
                   <FolderKanban className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{myGroups.length}</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
                   <p className="text-sm text-muted-foreground">Total Projects</p>
                 </div>
               </div>
@@ -57,7 +100,7 @@ export default function StudentMyProjectsPage() {
                   <CheckCircle className="h-6 w-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{myGroups.filter((g) => g.status === "approved").length}</p>
+                  <p className="text-2xl font-bold">{stats.approved}</p>
                   <p className="text-sm text-muted-foreground">Approved</p>
                 </div>
               </div>
@@ -70,7 +113,7 @@ export default function StudentMyProjectsPage() {
                   <Clock className="h-6 w-6 text-warning" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{myGroups.filter((g) => g.status === "pending").length}</p>
+                  <p className="text-2xl font-bold">{stats.pending}</p>
                   <p className="text-sm text-muted-foreground">Pending</p>
                 </div>
               </div>
