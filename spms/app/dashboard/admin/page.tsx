@@ -23,13 +23,6 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useAppStore } from "@/lib/store"
 
-// interface DashboardCounts {
-//   totalProjects: number;
-//   totalStudents: number;
-//   totalStaffs: number;
-//   totalProjectTypes: number;
-
-// }
 
 interface DashTotal {
   id: number;
@@ -39,12 +32,6 @@ interface DashTotal {
   totalProjectTypes: number;
   totalProjects: number;
 }
-// const {  projectGroups } = useAppStore()
-
-// const totalProjects = projectGroups.length
-// const totalStudents = students.length
-// const totalStaff = staff.length
-// const totalProjectTypes = projectTypes.length
 
 interface ProjectGroup {
   id: number
@@ -108,14 +95,6 @@ export default function AdminDashboard() {
     fetchProjectGroups()
   }, [])
 
-
-  // useEffect(() => {
-  //   fetch("/api/dashboard")
-  //     .then(res => res.json())
-  //     .then(setData)
-  //     .catch(console.error);
-  // }, []);
-
   useEffect(() => {
     fetch("/api/students")
       .then(res => res.json())
@@ -144,9 +123,6 @@ export default function AdminDashboard() {
   }, []);
 
 
-  // if (!data) {
-  //   return <p>Loading...</p>;
-  // }
 
   const stats = [
     {
