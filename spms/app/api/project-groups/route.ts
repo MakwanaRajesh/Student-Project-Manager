@@ -91,6 +91,7 @@ export async function GET() {
         pt.ProjectTypeName,
         s.StaffName AS GuideStaffName,
         pg.AverageCPI,
+        pg.Description,
         COUNT(pgm.ProjectGroupMemberID) AS MembersCount
       FROM ProjectGroup pg
       JOIN ProjectType pt ON pt.ProjectTypeID = pg.ProjectTypeID
@@ -110,6 +111,7 @@ export async function GET() {
         projectTypeName: g.ProjectTypeName,
         guideStaffName: g.GuideStaffName ?? "Not Assigned",
         averageCpi: g.AverageCPI ?? 0,
+        description: g.Description,
         membersCount: g.MembersCount,
         status: "approved",
       }))

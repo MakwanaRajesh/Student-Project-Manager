@@ -21,12 +21,14 @@ export interface MyProject {
   projectTypeName: string
   guideStaffName: string
   averageCpi: number
+  projectDescription: string
   membersCount: number
   status: "approved" | "pending" | "rejected"
+  isLeader: boolean
 }
 
 export default function StudentMyProjectsPage() {
-  const { user, projectGroups, students, staff, projectTypes } = useAppStore()
+  const { user } = useAppStore()
 
   const [myProject, setMyProject] = useState<MyProject[]>([]);
   const [loading, setLoading] = useState(true)
@@ -51,8 +53,8 @@ export default function StudentMyProjectsPage() {
     fetchMyProject()
   }, [])
 
-  const currentStudent = students.find((s) => s.email === user?.email) || students[0]
-  const myGroups = projectGroups.filter((group) => group.members.some((m) => m.studentId === currentStudent?.id))
+  // const currentStudent = students.find((s) => s.email === user?.email) || students[0]
+  // const myGroups = projectGroups.filter((group) => group.members.some((m) => m.studentId === currentStudent?.id))
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -69,9 +71,26 @@ export default function StudentMyProjectsPage() {
 
   const stats = {
     total: myProject.length,
-    approved: projectGroups.filter((g) => g.status === "approved").length,
-    pending: projectGroups.filter((g) => g.status === "pending").length,
+    approved: myProject.filter((g) => g.status === "approved").length,
+    pending: myProject.filter((g) => g.status === "pending").length,
   }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Loading projects...
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-destructive">
+        {error}
+      </div>
+    )
+  }
+
 
   return (
     <div className="min-h-screen">
@@ -133,12 +152,9 @@ export default function StudentMyProjectsPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            {myGroups.length > 0 ? (
+            {myProject.length > 0 ? (
               <div className="space-y-4">
-                {myGroups.map((project) => {
-                  const guide = staff.find((s) => s.id === project.guideStaffId)
-                  const projectType = projectTypes.find((t) => t.id === project.projectTypeId)
-                  const isLeader = project.members.some((m) => m.studentId === currentStudent?.id && m.isGroupLeader)
+                {myProject.map((project) => {
 
                   return (
                     <div
@@ -153,7 +169,7 @@ export default function StudentMyProjectsPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h3 className="font-semibold text-lg">{project.projectTitle}</h3>
-                              {isLeader && (
+                              {project.isLeader && (
                                 <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
                                   Leader
                                 </Badge>
@@ -185,19 +201,19 @@ export default function StudentMyProjectsPage() {
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
                             <AvatarFallback className="text-xs">
-                              {guide?.name
+                              {project.guideStaffName
                                 .split(" ")
                                 .map((n) => n[0])
                                 .join("")}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-muted-foreground">Guide: {guide?.name}</span>
+                          <span className="text-muted-foreground">Guide: {project.guideStaffName}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">{project.members.length} members</span>
+                          <span className="text-muted-foreground">{project.membersCount} members</span>
                         </div>
-                        <Badge variant="outline">{projectType?.name}</Badge>
+                        <Badge variant="outline">{project.projectTypeName}</Badge>
                       </div>
 
                       <div className="mt-4 flex items-center justify-between">

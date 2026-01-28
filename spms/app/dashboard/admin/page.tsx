@@ -63,7 +63,6 @@ const item = {
 export default function AdminDashboard() {
   const { user, meetings, students, staff, projectTypes } = useAppStore()
 
-  // const [data, setData] = useState<DashboardCounts | null>(null);
   const [projectGroups, setProjectGroups] = useState<ProjectGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("")
