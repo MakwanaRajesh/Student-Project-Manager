@@ -1,24 +1,3 @@
-// import { db } from "@/lib/db";
-// import { NextResponse } from "next/server";
-
-// // GET ALL
-// export async function GET() {
-//   const [rows] = await db.query("SELECT * FROM ProjectType");
-//   return NextResponse.json(rows);
-// }
-
-// // CREATE
-// export async function POST(req: Request) {
-//   const body = await req.json();
-//   const { ProjectTypeName, Description } = body;
-
-//   await db.query(
-//     "INSERT INTO ProjectType (ProjectTypeName, Description) VALUES (?, ?)",
-//     [ProjectTypeName, Description]
-//   );
-
-//   return NextResponse.json({ message: "Project Type Created" });
-// }
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 

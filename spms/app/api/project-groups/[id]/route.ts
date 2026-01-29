@@ -20,21 +20,24 @@ interface ProjectGroupRow extends RowDataPacket {
 }
 
 /* ---------------- GET BY ID ---------------- */
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const groupId = Number(params.id)
 
-  if (isNaN(groupId)) {
-    return NextResponse.json(
-      { message: "Invalid project group ID" },
-      { status: 400 }
-    )
-  }
-
+export async function GET(request: Request) {
   try {
-    const [rows] = await db.query<ProjectGroupRow[]>(
+    // Parse the ID from the URL
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const ProjectGroupID = pathSegments[pathSegments.length - 1];
+
+    console.log("Extracted ProjectGroup ID:", ProjectGroupID);
+
+    if (!ProjectGroupID || isNaN(parseInt(ProjectGroupID))) {
+      return NextResponse.json(
+        { message: "Valid ProjectGroup ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const [rows] = await db.query(
       `
       SELECT 
         pg.ProjectGroupID,
@@ -55,140 +58,136 @@ export async function GET(
       LEFT JOIN Staff gs ON gs.StaffID = pg.GuideStaffID
       LEFT JOIN Staff cs ON cs.StaffID = pg.ConvenerStaffID
       LEFT JOIN Staff es ON es.StaffID = pg.ExpertStaffID
-      WHERE pg.ProjectGroupID = ?
-      `,
-      [groupId]
-    )
+      WHERE pg.ProjectGroupID = ?`,
+      [parseInt(ProjectGroupID)]
+    );
 
-    if (rows.length === 0) {
+    const ProjectGroupArray = rows as any[];
+
+    if (!ProjectGroupArray.length) {
       return NextResponse.json(
-        { message: "Project group not found" },
+        { message: "ProjectGroup not found" },
         { status: 404 }
-      )
+      );
     }
 
-    const g = rows[0]
-
-    return NextResponse.json({
-      id: g.ProjectGroupID,
-      name: g.ProjectGroupName,
-      projectTitle: g.ProjectTitle,
-      projectArea: g.ProjectArea,
-      projectTypeId: g.ProjectTypeID,
-      projectTypeName: g.ProjectTypeName,
-      projectDescription: g.ProjectDescription,
-      guideStaffName: g.GuideStaffName ?? "Not Assigned",
-      convenerStaffName: g.ConvenerStaffName ?? "Not Assigned",
-      expertStaffName: g.ExpertStaffName ?? "Not Assigned",
-      averageCpi: g.AverageCPI ?? 0,
-      created: g.Created,
-      modified: g.Modified,
-    })
+    return NextResponse.json(ProjectGroupArray[0]);
   } catch (error) {
-    console.error("GET ProjectGroup by ID error:", error)
+    console.error("Error fetching ProjectGroup:", error);
     return NextResponse.json(
-      { message: "Failed to fetch project group" },
+      { message: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }
 
 /* ---------------- PUT ---------------- */
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const groupId = Number(params.id)
 
-  if (isNaN(groupId)) {
-    return NextResponse.json(
-      { message: "Invalid project group ID" },
-      { status: 400 }
-    )
-  }
-
+export async function PUT(request: Request) {
   try {
+    const url = new URL(request.url)
+    const pathSegments = url.pathname.split("/")
+    const ProjectGroupID = pathSegments[pathSegments.length - 1]
+
+    if (!ProjectGroupID || isNaN(Number(ProjectGroupID))) {
+      return NextResponse.json(
+        { message: "Valid ProjectGroup ID is required" },
+        { status: 400 }
+      )
+    }
+
     const body = await request.json()
 
-    const [result] = await db.query<ResultSetHeader>(
+    const {
+      ProjectGroupName,
+      ProjectTitle,
+      ProjectArea,
+      ProjectTypeID,
+      ProjectDescription,
+      AverageCPI,
+      GuideStaffID,
+      ConvenerStaffID,
+      ExpertStaffID,
+    } = body
+
+    const [result]: any = await db.query(
       `
       UPDATE ProjectGroup SET
         ProjectGroupName = ?,
-        ProjectTypeID = ?,
-        GuideStaffID = ?,
         ProjectTitle = ?,
         ProjectArea = ?,
+        ProjectTypeID = ?,
         ProjectDescription = ?,
         AverageCPI = ?,
+        GuideStaffID = ?,
         ConvenerStaffID = ?,
         ExpertStaffID = ?,
-        Description = ?
+        Modified = NOW()
       WHERE ProjectGroupID = ?
       `,
       [
-        body.ProjectGroupName,
-        body.ProjectTypeID,
-        body.GuideStaffID ?? null,
-        body.ProjectTitle ?? null,
-        body.ProjectArea ?? null,
-        body.ProjectDescription ?? null,
-        body.AverageCPI ?? null,
-        body.ConvenerStaffID ?? null,
-        body.ExpertStaffID ?? null,
-        body.Description ?? null,
-        groupId,
+        ProjectGroupName,
+        ProjectTitle,
+        ProjectArea,
+        ProjectTypeID,
+        ProjectDescription,
+        AverageCPI,
+        GuideStaffID,
+        ConvenerStaffID,
+        ExpertStaffID,
+        ProjectGroupID,
       ]
     )
 
     if (result.affectedRows === 0) {
       return NextResponse.json(
-        { message: "Project group not found" },
+        { message: "ProjectGroup not found" },
         { status: 404 }
       )
     }
 
-    return NextResponse.json({ message: "Project group updated" })
+    return NextResponse.json({ message: "ProjectGroup updated successfully" })
   } catch (error) {
-    console.error("PUT ProjectGroup error:", error)
+    console.error("Error updating ProjectGroup:", error)
     return NextResponse.json(
-      { message: "Failed to update project group" },
+      { message: "Internal server error" },
       { status: 500 }
     )
   }
 }
 
+
 /* ---------------- DELETE ---------------- */
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const groupId = Number(params.id)
-
-  if (isNaN(groupId)) {
-    return NextResponse.json(
-      { message: "Invalid project group ID" },
-      { status: 400 }
-    )
-  }
-
+export async function DELETE(request: Request) {
   try {
-    const [result] = await db.query<ResultSetHeader>(
+    const url = new URL(request.url)
+    const pathSegments = url.pathname.split("/")
+    const ProjectGroupID = pathSegments[pathSegments.length - 1]
+
+    if (!ProjectGroupID || isNaN(Number(ProjectGroupID))) {
+      return NextResponse.json(
+        { message: "Valid ProjectGroup ID is required" },
+        { status: 400 }
+      )
+    }
+
+    const [result]: any = await db.query(
       `DELETE FROM ProjectGroup WHERE ProjectGroupID = ?`,
-      [groupId]
+      [ProjectGroupID]
     )
 
     if (result.affectedRows === 0) {
       return NextResponse.json(
-        { message: "Project group not found" },
+        { message: "ProjectGroup not found" },
         { status: 404 }
       )
     }
 
-    return NextResponse.json({ message: "Project group deleted" })
+    return NextResponse.json({ message: "ProjectGroup deleted successfully" })
   } catch (error) {
-    console.error("DELETE ProjectGroup error:", error)
+    console.error("Error deleting ProjectGroup:", error)
     return NextResponse.json(
-      { message: "Failed to delete project group" },
+      { message: "Internal server error" },
       { status: 500 }
     )
   }

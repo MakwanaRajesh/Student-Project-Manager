@@ -1,117 +1,9 @@
-// import { db } from "@/lib/db";
-// import { NextResponse } from "next/server";
-
-// export async function GET(
-//   request: Request
-// //   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const url = new URL(request.url);
-//     const pathSegments = url.pathname.split('/');
-//     const meetingId = pathSegments[pathSegments.length - 1];
-//     // const meetingId = Number(params.id);
-
-//     console.log("ProjectMeeting ID:", meetingId);
-//     console.log("Type of meetingId:", typeof meetingId);
-
-//     // validation
-//     // if (isNaN(meetingId)) {
-//     //   return NextResponse.json(
-//     //     { error: "Invalid ProjectMeeting ID" },
-//     //     { status: 400 }
-//     //   );
-//     // }
-
-//     if (!meetingId || isNaN(parseInt(meetingId))) {
-//       return NextResponse.json(
-//         { message: "Valid Meeting ID is required" },
-//         { status: 400 }
-//       );
-//     }
-
-//     const [rows]: any = await db.query(
-//     //   `
-//     //   SELECT
-//     //     pm.ProjectMeetingID,
-//     //     pm.ProjectGroupID,
-//     //     s.StaffName AS GuideStaffName,
-//     //     pm.MeetingDateTime,
-//     //     pm.MeetingPurpose,
-//     //     pm.MeetingLocation,
-//     //     pm.MeetingNotes,
-//     //     pm.MeetingStatus,
-//     //     pm.MeetingStatusDescription,
-//     //     pm.MeetingStatusDatetime,
-//     //     pm.Description
-//     //   FROM ProjectMeeting pm
-//     //   JOIN Staff s ON s.StaffID = pm.GuideStaffID
-//     //   WHERE pm.ProjectMeetingID = ?
-//     //   `,
-//     "SELECT * FROM ProjectMeeting WHERE ProjectMeetingID = ?"
-//       [parseInt(meetingId)]
-//     );
-
-//     const meetingArray= rows as any[];
-
-//     if (!meetingArray.length) {
-//       return NextResponse.json(
-//         { message: "Project Meeting not found" },
-//         { status: 404 }
-//       );
-//     }
-
-//     return NextResponse.json(meetingArray[0]);
-//   } catch (error) {
-//     console.error("ProjectMeeting [id] GET error", error);
-//     return NextResponse.json(
-//       { message: "Failed to fetch Project Meeting" },
-//       { status: 500 }
-//     );
-//   }
-// }
-
-
 import { db } from "@/lib/db"
 import { NextResponse } from "next/server"
 
 /* =====================================
    GET: Single meeting by ID
 ===================================== */
-// export async function GET(
-//   req: Request,
-//   { params }: { params: { id: string } }
-// ) {
-//   try {
-//     const [rows]: any = await db.query(
-//       `
-//       SELECT
-//         pm.*,
-//         pg.ProjectGroupName,
-//         s.StaffName AS GuideName
-//       FROM ProjectMeeting pm
-//       JOIN ProjectGroup pg ON pg.ProjectGroupID = pm.ProjectGroupID
-//       JOIN Staff s ON s.StaffID = pm.GuideStaffID
-//       WHERE pm.ProjectMeetingID = ?
-//       `,
-//       [params.id]
-//     )
-
-//     if (rows.length === 0) {
-//       return NextResponse.json(
-//         { error: "Project meeting not found" },
-//         { status: 404 }
-//       )
-//     }
-
-//     return NextResponse.json(rows[0])
-//   } catch (error) {
-//     console.error("ProjectMeeting GET by ID error:", error)
-//     return NextResponse.json(
-//       { error: "Failed to fetch project meeting" },
-//       { status: 500 }
-//     )
-//   }
-// }
 
 export async function GET(request: Request) {
   try {
@@ -166,14 +58,32 @@ export async function GET(request: Request) {
 /* =====================================
    PUT: Update meeting
 ===================================== */
-export async function PUT(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
   try {
-    const body = await req.json()
+    const url = new URL(request.url)
+    const ProjectMeetingID = Number(url.pathname.split("/").pop())
 
-    await db.query(
+    if (!ProjectMeetingID || isNaN(ProjectMeetingID)) {
+      return NextResponse.json(
+        { message: "Valid ProjectMeeting ID is required" },
+        { status: 400 }
+      )
+    }
+
+    const body = await request.json()
+
+    const {
+      MeetingDateTime,
+      MeetingPurpose,
+      MeetingLocation,
+      MeetingNotes,
+      MeetingStatus,
+      MeetingStatusDescription,
+      MeetingStatusDatetime,
+      Description
+    } = body
+
+    const [result]: any = await db.query(
       `
       UPDATE ProjectMeeting
       SET
@@ -184,46 +94,70 @@ export async function PUT(
         MeetingStatus = ?,
         MeetingStatusDescription = ?,
         MeetingStatusDatetime = ?,
-        Description = ?
+        Description = ?,
+        Modified = NOW()
       WHERE ProjectMeetingID = ?
       `,
       [
-        body.MeetingDateTime,
-        body.MeetingPurpose,
-        body.MeetingLocation,
-        body.MeetingNotes,
-        body.MeetingStatus,
-        body.MeetingStatusDescription,
-        body.MeetingStatusDatetime,
-        body.Description,
-        params.id
+        MeetingDateTime ? new Date(MeetingDateTime) : null,
+        MeetingPurpose ?? null,
+        MeetingLocation ?? null,
+        MeetingNotes ?? null,
+        MeetingStatus ?? null,
+        MeetingStatusDescription ?? null,
+        MeetingStatusDatetime ? new Date(MeetingStatusDatetime) : null,
+        Description ?? null,
+        ProjectMeetingID
       ]
     )
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        { message: "ProjectMeeting not found" },
+        { status: 404 }
+      )
+    }
 
     return NextResponse.json({
       message: "Project meeting updated successfully"
     })
   } catch (error) {
-    console.error("ProjectMeeting PUT error:", error)
+    console.error("❌ ProjectMeeting PUT error:", error)
     return NextResponse.json(
-      { error: "Failed to update project meeting" },
+      { message: "Failed to update project meeting" },
       { status: 500 }
     )
   }
 }
 
+
+
 /* =====================================
    DELETE: Delete meeting
 ===================================== */
-export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    await db.query(
-      "DELETE FROM ProjectMeeting WHERE ProjectMeetingID = ?",
-      [params.id]
+    const url = new URL(request.url)
+    const ProjectMeetingID = Number(url.pathname.split("/").pop())
+
+    if (!ProjectMeetingID || isNaN(ProjectMeetingID)) {
+      return NextResponse.json(
+        { message: "Valid ProjectMeeting ID is required" },
+        { status: 400 }
+      )
+    }
+
+    const [result]: any = await db.query(
+      `DELETE FROM ProjectMeeting WHERE ProjectMeetingID = ?`,
+      [ProjectMeetingID]
     )
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        { message: "ProjectMeeting not found" },
+        { status: 404 }
+      )
+    }
 
     return NextResponse.json({
       message: "Project meeting deleted successfully"
@@ -231,7 +165,7 @@ export async function DELETE(
   } catch (error) {
     console.error("ProjectMeeting DELETE error:", error)
     return NextResponse.json(
-      { error: "Failed to delete project meeting" },
+      { message: "Failed to delete project meeting" },
       { status: 500 }
     )
   }

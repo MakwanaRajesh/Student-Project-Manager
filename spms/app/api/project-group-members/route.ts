@@ -43,16 +43,15 @@ export async function GET(req: Request) {
 /* =====================================
    POST: Add student to group
 ===================================== */
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json()
     const {
       ProjectGroupID,
       StudentID,
       IsGroupLeader,
       StudentCGPA,
       Description
-    } = body
+    } = await request.json()
 
     const [result]: any = await db.query(
       `
@@ -64,11 +63,14 @@ export async function POST(req: Request) {
     )
 
     return NextResponse.json({
-      message: "Student added to group successfully",
+      message: "Student added successfully",
       ProjectGroupMemberID: result.insertId
     })
   } catch (error) {
-    console.error("ProjectGroupMember POST error:", error)
-    return NextResponse.json({ error: "Failed to add group member" }, { status: 500 })
+    console.error("POST ProjectGroupMember error:", error)
+    return NextResponse.json(
+      { message: "Failed to add group member" },
+      { status: 500 }
+    )
   }
 }

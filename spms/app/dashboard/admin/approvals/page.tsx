@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { FolderKanban, Users, Clock, CheckCircle, XCircle, Eye } from "lucide-react"
@@ -11,20 +12,97 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAppStore } from "@/lib/store"
 import { toast } from "sonner"
 
+interface ProjectGroup {
+  id: number
+  name: string
+  projectTitle: string
+  projectArea: string
+  projectDescription: string
+  projectTypeId: number
+  projectTypeName: string
+  guideStaffName: string
+  averageCpi: number
+  membersCount: number
+  guideStaffId: number
+  status: "pending" | "approved" | "rejected"
+}
+
 export default function AdminApprovalsPage() {
-  const { projectGroups, students, staff, projectTypes, approveProjectGroup, rejectProjectGroup } = useAppStore()
+  // const { students, staff, projectTypes, approveProjectGroup, rejectProjectGroup } = useAppStore()
+  const { staff, projectTypes } = useAppStore()
 
-  const pendingGroups = projectGroups.filter((g) => g.status === "pending")
+  const [projectGroups, setProjectGroups] = useState<ProjectGroup[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleApprove = (id: string) => {
-    approveProjectGroup(id)
-    toast.success("Project approved successfully!")
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await fetch("/api/project-groups")
+        const data = await res.json()
+        setProjectGroups(data)
+      } catch {
+        toast.error("Failed to load projects")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
+
+  const pendingGroups = projectGroups.filter(
+    (g) => g.status === "pending"
+  )
+
+  const handleApprove = async (id: number) => {
+    try {
+      const res = await fetch(`/api/project-groups/${id}/approve`, {
+        method: "PATCH",
+      })
+
+      if (!res.ok) throw new Error()
+
+      setProjectGroups((prev) =>
+        prev.map((g) =>
+          g.id === id ? { ...g, status: "approved" } : g
+        )
+      )
+
+      toast.success("Project approved successfully")
+    } catch {
+      toast.error("Failed to approve project")
+    }
   }
 
-  const handleReject = (id: string) => {
-    rejectProjectGroup(id)
-    toast.error("Project rejected")
+  const handleReject = async (id: number) => {
+    try {
+      const res = await fetch(`/api/project-groups/${id}/reject`, {
+        method: "PATCH",
+      })
+
+      if (!res.ok) throw new Error()
+
+      setProjectGroups((prev) =>
+        prev.map((g) =>
+          g.id === id ? { ...g, status: "rejected" } : g
+        )
+      )
+
+      toast.success("Project rejected")
+    } catch {
+      toast.error("Failed to reject project")
+    }
   }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Header title="Pending Approvals" description="Review and approve project proposals" />
+        <div className="p-6">Loading projects...</div>
+      </div>
+    )
+  }
+
 
   return (
     <div className="min-h-screen">
@@ -84,7 +162,16 @@ export default function AdminApprovalsPage() {
             {pendingGroups.length > 0 ? (
               <div className="space-y-4">
                 {pendingGroups.map((group) => {
-                  const guide = staff.find((s) => s.id === group.guideStaffId)
+                  // const guide = staff.find((s) => s.id === group.guideStaffId)
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      {group.guideStaffName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+
                   const projectType = projectTypes.find((t) => t.id === group.projectTypeId)
 
                   return (

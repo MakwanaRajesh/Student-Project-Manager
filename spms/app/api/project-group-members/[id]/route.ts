@@ -105,56 +105,85 @@ export async function GET(request: Request) {
 /* =====================================
    PUT: Update group member
 ===================================== */
-export async function PUT(
-    req: Request,
-    { params }: { params: { id: string } }
-) {
-    try {
-        const body = await req.json()
-        const { IsGroupLeader, StudentCGPA, Description } = body
+export async function PUT(request: Request) {
+  try {
+    const url = new URL(request.url)
+    const ProjectGroupMemberID = Number(url.pathname.split("/").pop())
 
-        await db.query(
-            `
+    if (!ProjectGroupMemberID || isNaN(ProjectGroupMemberID)) {
+      return NextResponse.json(
+        { message: "Valid ProjectGroupMember ID is required" },
+        { status: 400 }
+      )
+    }
+
+    const { IsGroupLeader, StudentCGPA, Description } =
+      await request.json()
+
+    const [result]: any = await db.query(
+      `
       UPDATE ProjectGroupMember
-      SET IsGroupLeader = ?, StudentCGPA = ?, Description = ?
+      SET IsGroupLeader = ?, StudentCGPA = ?, Description = ?, Modified = NOW()
       WHERE ProjectGroupMemberID = ?
       `,
-            [IsGroupLeader, StudentCGPA, Description, params.id]
-        )
+      [IsGroupLeader, StudentCGPA, Description, ProjectGroupMemberID]
+    )
 
-        return NextResponse.json({
-            message: "Project group member updated successfully"
-        })
-    } catch (error) {
-        console.error("ProjectGroupMember PUT error:", error)
-        return NextResponse.json(
-            { error: "Failed to update project group member" },
-            { status: 500 }
-        )
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        { message: "ProjectGroupMember not found" },
+        { status: 404 }
+      )
     }
-}
+
+    return NextResponse.json({
+      message: "Project group member updated successfully"
+    })
+  } catch (error) {
+    console.error("PUT ProjectGroupMember error:", error)
+    return NextResponse.json(
+      { message: "Failed to update group member" },
+      { status: 500 }
+    )
+  }
+}   
 
 /* =====================================
    DELETE: Remove student from group
 ===================================== */
-export async function DELETE(
-    req: Request,
-    { params }: { params: { id: string } }
-) {
-    try {
-        await db.query(
-            "DELETE FROM ProjectGroupMember WHERE ProjectGroupMemberID = ?",
-            [params.id]
-        )
 
-        return NextResponse.json({
-            message: "Project group member deleted successfully"
-        })
-    } catch (error) {
-        console.error("ProjectGroupMember DELETE error:", error)
-        return NextResponse.json(
-            { error: "Failed to delete project group member" },
-            { status: 500 }
-        )
+export async function DELETE(request: Request) {
+  try {
+    const url = new URL(request.url)
+    const ProjectGroupMemberID = Number(url.pathname.split("/").pop())
+
+    if (!ProjectGroupMemberID || isNaN(ProjectGroupMemberID)) {
+      return NextResponse.json(
+        { message: "Valid ProjectGroupMember ID is required" },
+        { status: 400 }
+      )
     }
+
+    const [result]: any = await db.query(
+      `DELETE FROM ProjectGroupMember WHERE ProjectGroupMemberID = ?`,
+      [ProjectGroupMemberID]
+    )
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        { message: "ProjectGroupMember not found" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      message: "Project group member deleted successfully"
+    })
+  } catch (error) {
+    console.error("DELETE ProjectGroupMember error:", error)
+    return NextResponse.json(
+      { message: "Failed to delete group member" },
+      { status: 500 }
+    )
+  }
 }
