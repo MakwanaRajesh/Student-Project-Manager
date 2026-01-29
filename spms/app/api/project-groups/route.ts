@@ -2,56 +2,69 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import type { RowDataPacket, ResultSetHeader } from "mysql2"
 
-// =======================
-// GET: All Project Groups
-// =======================
+interface ProjectGroupRow extends RowDataPacket {
+  ProjectGroupID: number
+  ProjectGroupName: string
+  ProjectTitle: string | null
+  ProjectArea: string | null
+  ProjectTypeID: number
+  ProjectTypeName: string
+  GuideStaffName: string | null
+  AverageCPI: number | null
+  MembersCount: number
+  status: string
+  Description: string | null
+}
+
+/* ================= GET ALL ================= */
 export async function GET() {
   try {
-    const [rows] = await db.query<RowDataPacket[]>(`
+    const [rows] = await db.query<ProjectGroupRow[]>(`
       SELECT 
-        pg.*,
+        pg.ProjectGroupID,
+        pg.ProjectGroupName,
+        pg.ProjectTitle,
+        pg.ProjectArea,
+        pg.ProjectTypeID,
         pt.ProjectTypeName,
-        g.StaffName AS GuideName,
-        c.StaffName AS ConvenerName,
-        e.StaffName AS ExpertName
+        s.StaffName AS GuideStaffName,
+        pg.AverageCPI,
+        pg.Description,
+        pg.Status AS status,
+        COUNT(pgm.ProjectGroupMemberID) AS MembersCount
       FROM ProjectGroup pg
-      LEFT JOIN ProjectType pt ON pg.ProjectTypeID = pt.ProjectTypeID
-      LEFT JOIN Staff g ON pg.GuideStaffID = g.StaffID
-      LEFT JOIN Staff c ON pg.ConvenerStaffID = c.StaffID
-      LEFT JOIN Staff e ON pg.ExpertStaffID = e.StaffID
+      JOIN ProjectType pt ON pt.ProjectTypeID = pg.ProjectTypeID
+      LEFT JOIN Staff s ON s.StaffID = pg.GuideStaffID
+      LEFT JOIN ProjectGroupMember pgm ON pgm.ProjectGroupID = pg.ProjectGroupID
+      GROUP BY pg.ProjectGroupID
       ORDER BY pg.Created DESC
     `)
 
-    return NextResponse.json(rows)
-  } catch (error) {
-    console.error("GET ProjectGroup Error:", error)
     return NextResponse.json(
-      { message: "Failed to fetch project groups" },
-      { status: 500 }
+      rows.map(g => ({
+        id: g.ProjectGroupID,
+        name: g.ProjectGroupName,
+        projectTitle: g.ProjectTitle,
+        projectArea: g.ProjectArea,
+        projectTypeId: g.ProjectTypeID,
+        projectTypeName: g.ProjectTypeName,
+        guideStaffName: g.GuideStaffName ?? "Not Assigned",
+        averageCpi: g.AverageCPI ?? 0,
+        description: g.Description,
+        membersCount: g.MembersCount,
+        status: g.status
+      }))
     )
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json({ message: "Failed" }, { status: 500 })
   }
 }
 
-// =======================
-// POST: Create Project Group
-// =======================
+/* ================= POST ================= */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-
-    const {
-      ProjectGroupName,
-      ProjectTypeID,
-      GuideStaffID,
-      ProjectTitle,
-      ProjectArea,
-      ProjectDescription,
-      AverageCPI,
-      ConvenerStaffID,
-      ExpertStaffID,
-      Description,
-      Status
-    } = body
 
     const [result] = await db.query<ResultSetHeader>(
       `
@@ -72,29 +85,26 @@ export async function POST(request: Request) {
       VALUES (?,?,?,?,?,?,?,?,?,?,?)
       `,
       [
-        ProjectGroupName,
-        ProjectTypeID,
-        GuideStaffID,
-        ProjectTitle,
-        ProjectArea,
-        ProjectDescription,
-        AverageCPI,
-        ConvenerStaffID,
-        ExpertStaffID,
-        Description,
-        Status ?? "pending"
+        body.ProjectGroupName,
+        body.ProjectTypeID,
+        body.GuideStaffID,
+        body.ProjectTitle,
+        body.ProjectArea,
+        body.ProjectDescription,
+        body.AverageCPI,
+        body.ConvenerStaffID,
+        body.ExpertStaffID,
+        body.Description,
+        body.Status ?? "pending"
       ]
     )
 
     return NextResponse.json(
-      { message: "Project group created", ProjectGroupID: result.insertId },
+      { ProjectGroupID: result.insertId },
       { status: 201 }
     )
   } catch (error) {
-    console.error("POST ProjectGroup Error:", error)
-    return NextResponse.json(
-      { message: "Failed to create project group" },
-      { status: 500 }
-    )
+    console.error(error)
+    return NextResponse.json({ message: "Failed" }, { status: 500 })
   }
 }

@@ -34,6 +34,7 @@ interface DashTotal {
 }
 
 interface ProjectGroup {
+  ProjectGroupID: number;
   id: number
   name: string
   projectTitle: string

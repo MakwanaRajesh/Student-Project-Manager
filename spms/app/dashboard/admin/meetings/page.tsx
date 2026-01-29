@@ -471,7 +471,16 @@ export default function AdminMeetingsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Avatar className="h-5 w-5">
-                            <AvatarFallback className="text-xs">{meeting.GuideStaffName.charAt(4)}</AvatarFallback>
+                            <AvatarFallback className="text-xs">
+                              {meeting.GuideStaffName
+                                ? meeting.GuideStaffName
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                : "NA"}
+
+                            </AvatarFallback>
                           </Avatar>
                           {meeting.GuideStaffName}
                         </div>
