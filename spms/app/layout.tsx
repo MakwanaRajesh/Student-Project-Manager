@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 export const metadata: Metadata = {
   title: "SPMS - Student Project Management System",
   description: "Manage and monitor student academic projects efficiently",
-    generator: 'v0.app'
+    generator: 'Rajesh'
 }
 
 export default function RootLayout({

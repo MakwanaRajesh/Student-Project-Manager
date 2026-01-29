@@ -100,9 +100,10 @@ export async function POST(request: Request) {
     )
 
     return NextResponse.json(
-      { ProjectGroupID: result.insertId },
+      { id: result.insertId },
       { status: 201 }
     )
+
   } catch (error) {
     console.error(error)
     return NextResponse.json({ message: "Failed" }, { status: 500 })

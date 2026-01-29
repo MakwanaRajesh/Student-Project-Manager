@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ClipboardCheck, FolderKanban, CheckCircle, XCircle, Eye } from "lucide-react"
 import { Header } from "@/components/dashboard/header"
@@ -10,31 +11,115 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAppStore } from "@/lib/store"
 import { toast } from "sonner"
 
+interface ProjectGroup {
+  id: number
+  name: string
+  projectTitle: string | null
+  projectArea: string | null
+  projectTypeId: number
+  projectTypeName: string
+  guideStaffName: string
+  averageCpi: number
+  description: string | null
+  memberCount: number
+  status: "pending" | "approved" | "rejected"
+}
+
 export default function FacultyApprovalsPage() {
-  const { user, projectGroups, students, staff, projectTypes, approveProjectGroup, rejectProjectGroup } = useAppStore()
+  const { user, students, staff, projectTypes, approveProjectGroup, rejectProjectGroup } = useAppStore()
 
-  const currentFaculty = staff.find((s) => s.email === user?.email) || staff[0]
+  const [projectGroups, setProjectGroups] = useState<ProjectGroup[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
 
-  // Groups pending where faculty is convener or expert
-  const pendingApprovals = projectGroups.filter(
-    (g) =>
-      g.status === "pending" && (g.convenerStaffId === currentFaculty?.id || g.expertStaffId === currentFaculty?.id),
+  useEffect(() => {
+    const fetchProjectGroups = async () => {
+      try {
+        const res = await fetch("/api/project-groups")
+        if (!res.ok) throw new Error("API error")
+        const data = await res.json()
+
+        const normalized = data.map((g: any) => ({
+          ...g,
+          averageCpi: Number(g.averageCpi) || 0,
+        }))
+
+        setProjectGroups(normalized)
+
+      } catch (err) {
+        setError("Failed to fetch project groups")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjectGroups()
+  }, [])
+
+  const pendingGroups = projectGroups.filter(
+    (g) => g.status === "pending"
   )
 
-  // Groups guided by this faculty that are pending
-  const guidedPending = projectGroups.filter((g) => g.status === "pending" && g.guideStaffId === currentFaculty?.id)
-
-  const handleApprove = (groupId: string) => {
-    approveProjectGroup(groupId)
-    toast.success("Project approved successfully!")
+  const updateStatus = async (
+    id: number,
+    status: "approved" | "rejected"
+  ) => {
+    try {
+      const res = await fetch(`/api/project-groups/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      })
+      if (!res.ok) throw new Error("API error")
+      setProjectGroups((prev) =>
+        prev.map((g) =>
+          g.id === id ? { ...g, status } : g
+        )
+      )
+      toast.success(`Project ${status}`)
+    } catch (err) {
+      toast.error("Failed to update status")
+    }
   }
 
-  const handleReject = (groupId: string) => {
-    rejectProjectGroup(groupId)
-    toast.success("Project rejected")
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-muted-foreground">
+        Loading project approvals...
+      </div>
+    )
   }
+  if (error) {
+    return (
+      <div className="p-10 text-center text-destructive">
+        {error}
+      </div>
+    )
+  }
+  // const currentFaculty = staff.find((s) => s.email === user?.email) || staff[0]
 
-  const allPending = [...new Map([...pendingApprovals, ...guidedPending].map((g) => [g.id, g])).values()]
+  // // Groups pending where faculty is convener or expert
+  // const pendingApprovals = projectGroups.filter(
+  //   (g) =>
+  //     g.status === "pending" && (g.convenerStaffId === currentFaculty?.id || g.expertStaffId === currentFaculty?.id),
+  // )
+
+  // // Groups guided by this faculty that are pending
+  // const guidedPending = projectGroups.filter((g) => g.status === "pending" && g.guideStaffId === currentFaculty?.id)
+
+  // const handleApprove = (groupId: string) => {
+  //   approveProjectGroup(groupId)
+  //   toast.success("Project approved successfully!")
+  // }
+
+  // const handleReject = (groupId: string) => {
+  //   rejectProjectGroup(groupId)
+  //   toast.success("Project rejected")
+  // }
+
+  // const allPending = [...new Map([...pendingApprovals, ...guidedPending].map((g) => [g.id, g])).values()]
 
   return (
     <div className="min-h-screen">
@@ -50,7 +135,7 @@ export default function FacultyApprovalsPage() {
                   <ClipboardCheck className="h-6 w-6 text-warning" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{allPending.length}</p>
+                  <p className="text-2xl font-bold">{pendingGroups.length}</p>
                   <p className="text-sm text-muted-foreground">Pending Approvals</p>
                 </div>
               </div>
@@ -65,8 +150,7 @@ export default function FacultyApprovalsPage() {
                 <div>
                   <p className="text-2xl font-bold">
                     {
-                      projectGroups.filter((g) => g.status === "approved" && g.guideStaffId === currentFaculty?.id)
-                        .length
+                      projectGroups.filter((g) => g.status === "approved").length
                     }
                   </p>
                   <p className="text-sm text-muted-foreground">Approved by You</p>
@@ -83,8 +167,7 @@ export default function FacultyApprovalsPage() {
                 <div>
                   <p className="text-2xl font-bold">
                     {
-                      projectGroups.filter((g) => g.status === "rejected" && g.guideStaffId === currentFaculty?.id)
-                        .length
+                      projectGroups.filter((g) => g.status === "rejected").length
                     }
                   </p>
                   <p className="text-sm text-muted-foreground">Rejected</p>
@@ -101,11 +184,11 @@ export default function FacultyApprovalsPage() {
             <CardDescription>Projects awaiting your review</CardDescription>
           </CardHeader>
           <CardContent>
-            {allPending.length > 0 ? (
+            {pendingGroups.length > 0 ? (
               <div className="space-y-4">
-                {allPending.map((group) => {
-                  const projectType = projectTypes.find((t) => t.id === group.projectTypeId)
-                  const guide = staff.find((s) => s.id === group.guideStaffId)
+                {pendingGroups.map((group) => {
+                  // const projectType = projectTypes.find((t) => t.id === group.projectTypeId)
+                  // const guide = staff.find((s) => s.id === group.guideStaffId)
 
                   return (
                     <div key={group.id} className="p-6 rounded-xl border border-warning/30 bg-warning/5">
@@ -115,21 +198,21 @@ export default function FacultyApprovalsPage() {
                             <FolderKanban className="h-6 w-6 text-warning" />
                           </div>
                           <div>
-                            <h3 className="font-semibold text-lg">{group.projectTitle}</h3>
+                            <h3 className="font-semibold text-lg">{group.projectTitle ?? "Untitled"}</h3>
                             <p className="text-sm text-muted-foreground">{group.name}</p>
-                            <p className="text-sm text-muted-foreground">{group.projectArea}</p>
+                            <p className="text-sm text-muted-foreground">{group.projectArea ?? "--"}</p>
                           </div>
                         </div>
                         <Badge className="bg-warning/10 text-warning border-warning/30">Pending Review</Badge>
                       </div>
 
-                      <p className="mt-4 text-sm text-muted-foreground">{group.projectDescription}</p>
+                      <p className="mt-4 text-sm text-muted-foreground">{group.description ?? "No Description"}</p>
 
                       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm font-medium mb-2">Team Members</p>
                           <div className="flex flex-wrap gap-2">
-                            {group.members.map((member) => {
+                            {/* {group.memberCount.map((member) => {
                               const student = students.find((s) => s.id === member.studentId)
                               return (
                                 <div
@@ -152,17 +235,18 @@ export default function FacultyApprovalsPage() {
                                   )}
                                 </div>
                               )
-                            })}
+                            })} */}
+                            {group.memberCount ?? "One And Only Pies "}
                           </div>
                         </div>
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center justify-between">
                             <span className="text-muted-foreground">Project Type:</span>
-                            <Badge variant="outline">{projectType?.name}</Badge>
+                            <Badge variant="outline">{group.projectTypeName}</Badge>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-muted-foreground">Guide:</span>
-                            <span>{guide?.name}</span>
+                            <span>{group.guideStaffName}</span>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-muted-foreground">Average CPI:</span>
@@ -180,12 +264,12 @@ export default function FacultyApprovalsPage() {
                           variant="outline"
                           size="sm"
                           className="text-destructive hover:bg-destructive/10 bg-transparent"
-                          onClick={() => handleReject(group.id)}
+                          onClick={() => updateStatus(group.id, "rejected")}
                         >
                           <XCircle className="h-4 w-4 mr-2" />
                           Reject
                         </Button>
-                        <Button size="sm" onClick={() => handleApprove(group.id)}>
+                        <Button size="sm" onClick={() => updateStatus(group.id, "approved")}>
                           <CheckCircle className="h-4 w-4 mr-2" />
                           Approve
                         </Button>

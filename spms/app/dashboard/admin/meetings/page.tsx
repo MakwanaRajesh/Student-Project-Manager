@@ -479,7 +479,6 @@ export default function AdminMeetingsPage() {
                                   .join("")
                                   .toUpperCase()
                                 : "NA"}
-
                             </AvatarFallback>
                           </Avatar>
                           {meeting.GuideStaffName}
