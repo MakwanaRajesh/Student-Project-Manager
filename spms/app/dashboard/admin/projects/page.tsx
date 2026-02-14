@@ -30,16 +30,17 @@ import type { ColumnDef } from "@tanstack/react-table"
 /* ===================== TYPES ===================== */
 
 export interface ProjectGroup {
-  id: number
-  name: string
-  projectTitle: string
-  projectArea: string
-  projectTypeId: number
-  projectTypeName: string
-  guideStaffName: string
-  averageCpi: number
-  membersCount: number
-  status: "approved" | "pending" | "rejected"
+  ProjectGroupID: number
+  ProjectGroupName: string
+  ProjectTitle: string | null
+  ProjectArea: string | null
+  ProjectTypeID: number
+  ProjectTypeName: string
+  GuideStaffName: string | null
+  AverageCPI: string | number | null
+  MembersCount: number
+  Status: "pending" | "approved" | "rejected"
+  Description: string | null
 }
 
 /* ===================== PAGE ===================== */
@@ -55,15 +56,13 @@ export default function AdminProjectsPage() {
     async function fetchProjectGroups() {
       try {
         const res = await fetch("/api/project-groups")
+        if (!res.ok) throw new Error("Failed to fetch project groups")
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch project groups")
-        }
-
-        const data: ProjectGroup[] = await res.json()
-        setProjectGroups(data)
+        const data = await res.json()
+        setProjectGroups(Array.isArray(data) ? data : [])
       } catch (err) {
         setError("Something went wrong while loading project groups")
+        setProjectGroups([])
       } finally {
         setLoading(false)
       }
@@ -72,11 +71,12 @@ export default function AdminProjectsPage() {
     fetchProjectGroups()
   }, [])
 
+
   /* ===================== TABLE COLUMNS ===================== */
 
   const columns: ColumnDef<ProjectGroup>[] = [
     {
-      accessorKey: "name",
+      accessorKey: "ProjectGroupName",
       header: ({ column }) => (
         <SortableHeader column={column}>Group</SortableHeader>
       ),
@@ -88,9 +88,9 @@ export default function AdminProjectsPage() {
               <Users className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="font-medium">{group.name}</p>
+              <p className="font-medium">{group.ProjectGroupName}</p>
               <p className="text-xs text-muted-foreground">
-                {group.membersCount} members
+                {group.MembersCount} members
               </p>
             </div>
           </div>
@@ -98,49 +98,52 @@ export default function AdminProjectsPage() {
       },
     },
     {
-      accessorKey: "projectTitle",
+      accessorKey: "ProjectTitle",
       header: "Project",
       cell: ({ row }) => (
         <div>
-          <p className="font-medium">{row.original.projectTitle}</p>
+          <p className="font-medium">{row.original.ProjectTitle}</p>
           <p className="text-xs text-muted-foreground">
-            {row.original.projectArea}
+            {row.original.ProjectArea}
           </p>
         </div>
       ),
     },
     {
-      accessorKey: "projectTypeName",
+      accessorKey: "ProjectTypeName",
       header: "Type",
       cell: ({ row }) => (
-        <Badge variant="outline">{row.original.projectTypeName}</Badge>
+        <Badge variant="outline">{row.original.ProjectTypeName}</Badge>
       ),
     },
     {
-      accessorKey: "guideStaffName",
+      accessorKey: "GuideStaffName",
       header: "Guide",
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <Avatar className="h-6 w-6">
             <AvatarFallback className="text-xs">
-              {row.original.guideStaffName
-                .split(" ")
+              {row.original.GuideStaffName
+                ?.split(" ")  
+                .filter(Boolean)
                 .map((n) => n[0])
-                .join("")}
+                .slice(0, 2)
+                .join("")|| "NA"
+                .toUpperCase()}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm">{row.original.guideStaffName}</span>
+          <span className="text-sm">{row.original.GuideStaffName}</span>
         </div>
       ),
     },
     {
-      accessorKey: "averageCpi",
+      accessorKey: "AverageCPI",
       header: ({ column }) => (
         <SortableHeader column={column}>Avg CPI</SortableHeader>
       ),
       cell: ({ row }) => (
         <span className="font-mono">
-          {Number(row.original.averageCpi).toFixed(2)}
+          {Number(row.original.AverageCPI).toFixed(2)}
         </span>
       ),
     },
@@ -148,7 +151,7 @@ export default function AdminProjectsPage() {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.original.status
+        const status = row.original.Status
 
         return (
           <Badge
@@ -176,9 +179,12 @@ export default function AdminProjectsPage() {
     },
     {
       id: "actions",
+      header: ({ column }) => (
+        <SortableHeader column={column}>Actions</SortableHeader>
+      ),
       cell: ({ row }) => (
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/dashboard/admin/projects/${row.original.id}`}>
+          <Link href={`/dashboard/admin/projects/${row.original.ProjectGroupID}`}>
             <Eye className="h-4 w-4" />
           </Link>
         </Button>
@@ -190,9 +196,9 @@ export default function AdminProjectsPage() {
 
   const stats = {
     total: projectGroups.length,
-    approved: projectGroups.filter((g) => g.status === "approved").length,
-    pending: projectGroups.filter((g) => g.status === "pending").length,
-    rejected: projectGroups.filter((g) => g.status === "rejected").length,
+    approved: projectGroups.filter((g) => g.Status === "approved").length,
+    pending: projectGroups.filter((g) => g.Status === "pending").length,
+    rejected: projectGroups.filter((g) => g.Status === "rejected").length,
   }
 
   /* ===================== STATES ===================== */
@@ -255,7 +261,7 @@ export default function AdminProjectsPage() {
             <DataTable
               columns={columns}
               data={projectGroups}
-              searchKey="name"
+              searchKey="ProjectGroupName"
               searchPlaceholder="Search projects..."
             />
           </CardContent>

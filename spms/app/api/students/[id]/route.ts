@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { StudentName, Phone, Email, Description } = await request.json();
+    const { StudentName, Phone, Email, Description, SPI } = await request.json();
 
     if (!StudentName || !Phone || !Email) {
       return NextResponse.json(
@@ -64,8 +64,8 @@ export async function PUT(request: Request) {
     }
 
     await db.query(
-      "UPDATE Student SET StudentName=?, Phone=?, Email=?, Description=? WHERE StudentID=?",
-      [StudentName, Phone, Email, Description, parseInt(studentId)]
+      "UPDATE Student SET StudentName=?, Phone=?, Email=?, Description=?, SPI=? WHERE StudentID=?",
+      [StudentName, Phone, Email, Description,SPI, parseInt(studentId)]
     );
 
     return NextResponse.json({ 

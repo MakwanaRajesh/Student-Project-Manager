@@ -43,7 +43,7 @@ export default function StudentMyProjectsPage() {
           throw new Error("Failed to fetch My Project")
         }
         const data: MyProject[] = await res.json()
-        setMyProject(data)
+        setMyProject(Array.isArray(data) ? data : data.data ?? [])
       } catch (error) {
         setError("Something wen wrong while loading my project")
       } finally {

@@ -19,10 +19,10 @@ const demoUsers = {
   faculty: {
     id: "1",
     name: "Dr. Rajesh Kumar",
-    email: "rajesh.kumar@university.edu",
+    email: "rahul@college.edu",
     role: "faculty" as UserRole,
   },
-  student: { id: "1", name: "Arjun Mehta", email: "arjun.m@student.edu", role: "student" as UserRole },
+  student: { id: "1", name: "Arjun Mehta", email: "rajesh@student.edu", role: "student" as UserRole },
 }
 
 function getRedirectPath(role: UserRole): string {

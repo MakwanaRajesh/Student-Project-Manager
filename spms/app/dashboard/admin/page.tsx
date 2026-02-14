@@ -33,18 +33,18 @@ interface DashTotal {
   totalProjects: number;
 }
 
-interface ProjectGroup {
-  ProjectGroupID: number;
-  id: number
-  name: string
-  projectTitle: string
-  projectArea: string
-  projectTypeId: number
-  projectTypeName: string
-  guideStaffName: string
-  averageCpi: number
-  membersCount: number
-  status: "approved" | "pending" | "rejected"
+export interface ProjectGroup {
+  ProjectGroupID: number
+  ProjectGroupName: string
+  ProjectTitle: string | null
+  ProjectArea: string | null
+  ProjectTypeID: number
+  ProjectTypeName: string
+  GuideStaffName: string | null
+  AverageCPI: string | number | null
+  MembersCount: number
+  Status: "pending" | "approved" | "rejected"
+  Description: string | null
 }
 
 
@@ -70,30 +70,9 @@ export default function AdminDashboard() {
   const [totalStudent, setTotalStudent] = useState<DashTotal[]>([]);
   const [totalStaff, setTotalStaff] = useState<DashTotal[]>([]);
   const [totalProjectTypes, setTotalProjectTypes] = useState<DashTotal[]>([]);
-  const [totalProjects, setTotalProjects] = useState<DashTotal[]>([]);
+  // const [totalProjects, setTotalProjects] = useState<DashTotal[]>([]);
 
 
-
-  useEffect(() => {
-    async function fetchProjectGroups() {
-      try {
-        const res = await fetch("/api/project-groups")
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch project groups")
-        }
-
-        const data: ProjectGroup[] = await res.json()
-        setProjectGroups(data)
-      } catch (err) {
-        setError("Something went wrong while loading project groups")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProjectGroups()
-  }, [])
 
   useEffect(() => {
     fetch("/api/students")
@@ -116,22 +95,36 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/project-groups")
-      .then(res => res.json())
-      .then(setTotalProjects)
-      .catch(console.error)
-  }, []);
+    async function fetchProjectGroups() {
+      try {
+        const res = await fetch("/api/project-groups")
+        if (!res.ok) throw new Error("Failed to fetch project groups")
+
+        const data = await res.json()
+        setProjectGroups(Array.isArray(data) ? data : [])
+      } catch (err) {
+        setError("Something went wrong while loading project groups")
+        setProjectGroups([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjectGroups()
+  }, [])
+
+
 
 
 
   const stats = [
     {
       title: "Total Projects",
-      value: totalProjects.length.toString() ?? "0",
+      value: projectGroups.length.toString() ?? "0",
       change: "+12%",
       trend: "up",
       icon: FolderKanban,
-      color: "bg-primary/10 text-primary",
+      color: "bg-primary/10 t ext-primary",
     },
     {
       title: "Active Students",
@@ -151,7 +144,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Project Types",
-      value: totalProjectTypes.length.toString() ,
+      value: totalProjectTypes.length.toString(),
       change: "Active",
       trend: "neutral",
       icon: Settings,
@@ -159,9 +152,9 @@ export default function AdminDashboard() {
     },
   ]
 
-  const pendingGroups = projectGroups.filter((g) => g.status === "pending")
-  const approvedGroups = projectGroups.filter((g) => g.status === "approved")
-  const rejectedGroups = projectGroups.filter((g) => g.status === "rejected")
+  const pendingGroups = projectGroups.filter((g) => g.Status === "pending")
+  const approvedGroups = projectGroups.filter((g) => g.Status === "approved")
+  const rejectedGroups = projectGroups.filter((g) => g.Status === "rejected")
 
   const recentProjects = projectGroups.slice(0, 5)
 
@@ -243,7 +236,7 @@ export default function AdminDashboard() {
                       <p className="text-sm text-muted-foreground">Pending Approval</p>
                     </div>
                   </div>
-                  <Progress value={(pendingGroups.length / projectGroups.length) * 100} className="h-2 mt-4" />
+                  <Progress value={(pendingGroups.length ? (pendingGroups.length / projectGroups.length) * 100 : 0)} className="h-2 mt-4" />
                 </div>
                 <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/20">
                   <div className="flex items-center gap-3">
@@ -279,7 +272,7 @@ export default function AdminDashboard() {
                 <div className="space-y-4">
                   {recentProjects.map((project) => (
                     <div
-                      key={project.id}
+                      key={project.ProjectGroupID}
                       className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
@@ -287,22 +280,22 @@ export default function AdminDashboard() {
                           <FolderKanban className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-medium">{project.projectTitle}</h4>
+                          <h4 className="font-medium">{project.ProjectTitle}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {project.name} • {project.guideStaffName}
+                            {project.ProjectGroupName} • {project.GuideStaffName}
                           </p>
                         </div>
                       </div>
                       <Badge
                         className={
-                          project.status === "approved"
+                          project.Status === "approved"
                             ? "bg-success/10 text-success border-success/30"
-                            : project.status === "pending"
+                            : project.Status === "pending"
                               ? "bg-warning/10 text-warning border-warning/30"
                               : "bg-destructive/10 text-destructive border-destructive/30"
                         }
                       >
-                        {project.status}
+                        {project.Status}
                       </Badge>
                     </div>
                   ))}
@@ -332,7 +325,7 @@ export default function AdminDashboard() {
                     <span className="text-sm">Avg Group Size</span>
                   </div>
                   <span className="font-semibold">
-                    {(projectGroups.reduce((acc, g) => acc + g.membersCount, 0) / projectGroups.length || 0).toFixed(
+                    {(projectGroups.reduce((acc, g) => acc + g.MembersCount, 0) / projectGroups.length || 0).toFixed(
                       1,
                     )}
                   </span>
@@ -367,7 +360,7 @@ export default function AdminDashboard() {
                   { title: "View Reports", icon: BarChart3, href: "/dashboard/admin/reports" },
                 ].map((action) => (
                   <Button
-                    key={action.title}
+                    key={`${action.title}-${action.href}`}
                     variant="outline"
                     className="h-auto py-6 flex-col gap-3 hover:bg-primary/5 hover:border-primary/30 bg-transparent"
                     asChild
@@ -385,4 +378,5 @@ export default function AdminDashboard() {
       </motion.div>
     </div>
   )
+  
 }

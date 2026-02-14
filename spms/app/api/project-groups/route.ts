@@ -12,49 +12,20 @@ interface ProjectGroupRow extends RowDataPacket {
   GuideStaffName: string | null
   AverageCPI: number | null
   MembersCount: number
-  status: string
+  // status: string
+  Status: "pending" | "approved" | "rejected"
   Description: string | null
 }
 
 /* ================= GET ALL ================= */
 export async function GET() {
   try {
-    const [rows] = await db.query<ProjectGroupRow[]>(`
-      SELECT 
-        pg.ProjectGroupID,
-        pg.ProjectGroupName,
-        pg.ProjectTitle,
-        pg.ProjectArea,
-        pg.ProjectTypeID,
-        pt.ProjectTypeName,
-        s.StaffName AS GuideStaffName,
-        pg.AverageCPI,
-        pg.Description,
-        pg.Status AS status,
-        COUNT(pgm.ProjectGroupMemberID) AS MembersCount
-      FROM ProjectGroup pg
-      JOIN ProjectType pt ON pt.ProjectTypeID = pg.ProjectTypeID
-      LEFT JOIN Staff s ON s.StaffID = pg.GuideStaffID
-      LEFT JOIN ProjectGroupMember pgm ON pgm.ProjectGroupID = pg.ProjectGroupID
-      GROUP BY pg.ProjectGroupID
-      ORDER BY pg.Created DESC
+    const [rows] = await db.query<ProjectGroupRow[]>(
+      `
+      SELECT * FROM ProjectGroup
     `)
 
-    return NextResponse.json(
-      rows.map(g => ({
-        id: g.ProjectGroupID,
-        name: g.ProjectGroupName,
-        projectTitle: g.ProjectTitle,
-        projectArea: g.ProjectArea,
-        projectTypeId: g.ProjectTypeID,
-        projectTypeName: g.ProjectTypeName,
-        guideStaffName: g.GuideStaffName ?? "Not Assigned",
-        averageCpi: g.AverageCPI ?? 0,
-        description: g.Description,
-        membersCount: g.MembersCount,
-        status: g.status
-      }))
-    )
+    return NextResponse.json(rows)
   } catch (error) {
     console.error(error)
     return NextResponse.json({ message: "Failed" }, { status: 500 })
@@ -100,12 +71,15 @@ export async function POST(request: Request) {
     )
 
     return NextResponse.json(
-      { id: result.insertId },
+      { id: result.insertId, message: "Project Group Created Successfully" },
       { status: 201 }
     )
 
-  } catch (error) {
-    console.error(error)
-    return NextResponse.json({ message: "Failed" }, { status: 500 })
+  } catch (error: any) {
+    console.error("Project Group POST Error", error)
+
+    return NextResponse.json(
+      { message: "Failed", error: error.message }, { status: 500 }
+    )
   }
 }

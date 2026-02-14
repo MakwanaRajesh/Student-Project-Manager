@@ -29,17 +29,18 @@ import { toast } from "sonner"
    Types (MATCH API)
 ======================= */
 interface ProjectGroup {
-  id: number
-  name: string
-  projectTitle: string | null
-  projectArea: string | null
-  projectTypeId: number
-  projectTypeName: string
-  guideStaffName: string
-  averageCpi: number
-  description: string | null
-  membersCount: number
-  status: "pending" | "approved" | "rejected"
+  ProjectGroupID: number
+  ProjectGroupName: string
+  ProjectTitle: string | null
+  ProjectArea: string | null
+  ProjectTypeID: number
+  ProjectTypeName: string
+  GuideStaffName: string | null
+  AverageCPI: number | null
+  MembersCount: number
+  // status: string
+  Status: "pending" | "approved" | "rejected"
+  Description: string | null
 }
 
 export default function AdminApprovalsPage() {
@@ -66,6 +67,7 @@ export default function AdminApprovalsPage() {
 
       } catch (err) {
         setError("Failed to fetch project groups")
+        console.error(err)
       } finally {
         setLoading(false)
       }
@@ -75,7 +77,7 @@ export default function AdminApprovalsPage() {
   }, [])
 
   const pendingGroups = projectGroups.filter(
-    (g) => g.status === "pending"
+    (g) => g.Status === "pending"
   )
 
   /* =======================
@@ -97,7 +99,7 @@ export default function AdminApprovalsPage() {
 
       setProjectGroups((prev) =>
         prev.map((g) =>
-          g.id === id ? { ...g, status } : g
+          g.ProjectGroupID === id ? { ...g, status } : g
         )
       )
 
@@ -150,12 +152,12 @@ export default function AdminApprovalsPage() {
           />
           <StatCard
             icon={<CheckCircle className="h-6 w-6 text-success" />}
-            value={projectGroups.filter((g) => g.status === "approved").length}
+            value={projectGroups.filter((g) => g.Status === "approved").length}
             label="Approved"
           />
           <StatCard
             icon={<XCircle className="h-6 w-6 text-destructive" />}
-            value={projectGroups.filter((g) => g.status === "rejected").length}
+            value={projectGroups.filter((g) => g.Status === "rejected").length}
             label="Rejected"
           />
         </div>
@@ -176,7 +178,7 @@ export default function AdminApprovalsPage() {
               <div className="space-y-4">
                 {pendingGroups.map((group) => (
                   <div
-                    key={group.id}
+                    key={group.ProjectGroupID}
                     className="p-6 rounded-xl border border-warning/30 bg-warning/5"
                   >
                     <div className="flex justify-between">
@@ -187,13 +189,13 @@ export default function AdminApprovalsPage() {
 
                         <div>
                           <h3 className="font-semibold text-lg">
-                            {group.projectTitle ?? "Untitled Project"}
+                            {group.ProjectTitle ?? "Untitled Project"}
                           </h3>
                           <p className="text-sm text-muted-foreground">
-                            {group.name}
+                            {group.ProjectGroupName}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {group.projectArea ?? "—"}
+                            {group.ProjectArea ?? "—"}
                           </p>
                         </div>
                       </div>
@@ -204,40 +206,40 @@ export default function AdminApprovalsPage() {
                     </div>
 
                     <p className="mt-4 text-sm text-muted-foreground">
-                      {group.description ?? "No description"}
+                      {group.Description ?? "No description"}
                     </p>
 
                     <div className="mt-4 flex flex-wrap gap-4 text-sm">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           <AvatarFallback className="text-xs">
-                            {group.guideStaffName
-                              .split(" ")
-                              .map((n) => n[0])
+                            {group.GuideStaffName
+                              ?.split(" ")
+                              .map((n) => n[1])
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
-                        Guide: {group.guideStaffName}
+                        Guide: {group.GuideStaffName}
                       </div>
 
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
-                        {group.membersCount} members
+                        {group.MembersCount} members
                       </div>
 
                       <Badge variant="outline">
-                        {group.projectTypeName}
+                        {group.ProjectTypeName}
                       </Badge>
 
                       <Badge variant="outline">
-                        Avg CGPA: {group.averageCpi.toFixed(2)}
+                        Avg CGPA: {group.AverageCPI}
                       </Badge>
 
                     </div>
 
                     <div className="mt-4 flex justify-end gap-2">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/admin/approvals/${group.id}`}>
+                        <Link href={`/dashboard/admin/approvals/${group.ProjectGroupID}`}>
                           <Eye className="h-4 w-4 mr-2" />
                           View
                         </Link>
@@ -248,7 +250,7 @@ export default function AdminApprovalsPage() {
                         size="sm"
                         className="text-destructive"
                         onClick={() =>
-                          updateStatus(group.id, "rejected")
+                          updateStatus(group.ProjectGroupID, "rejected")
                         }
                       >
                         <XCircle className="h-4 w-4 mr-2" />
@@ -259,7 +261,7 @@ export default function AdminApprovalsPage() {
                         size="sm"
                         className="bg-success"
                         onClick={() =>
-                          updateStatus(group.id, "approved")
+                          updateStatus(group.ProjectGroupID, "approved")
                         }
                       >
                         <CheckCircle className="h-4 w-4 mr-2" />
