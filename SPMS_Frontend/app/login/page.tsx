@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { GraduationCap, User, Lock, ArrowRight, BookOpen, Users, ClipboardList } from "lucide-react"
@@ -24,10 +24,23 @@ function getRedirectPath(role: UserRole): string {
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login, isLoading } = useAppStore()
+  const { login, isLoading, isAuthenticated, user } = useAppStore()
+  const [isHydrated, setIsHydrated] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [role, setRole] = useState<UserRole>("student")
+
+  useEffect(() => {
+    const unsubFinishHydration = useAppStore.persist.onFinishHydration(() => setIsHydrated(true))
+    setIsHydrated(useAppStore.persist.hasHydrated())
+    return () => unsubFinishHydration()
+  }, [])
+
+  useEffect(() => {
+    if (isHydrated && isAuthenticated && user?.role) {
+      router.push(getRedirectPath(user.role))
+    }
+  }, [isHydrated, isAuthenticated, user, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,6 +68,14 @@ export default function LoginPage() {
     } catch {
       toast.error("Demo login failed. Make sure the backend is running.")
     }
+  }
+
+  if (!isHydrated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    )
   }
 
   return (

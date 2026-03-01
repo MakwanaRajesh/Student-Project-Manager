@@ -104,7 +104,7 @@ export default function AdminStaffPage() {
     },
   ]
 
-  const StaffForm = ({ onSubmit, isEdit }: { onSubmit: (e: React.FormEvent) => void; isEdit: boolean }) => (
+  const renderStaffForm = (onSubmit: (e: React.FormEvent) => void, isEdit: boolean) => (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2"><Label>Full Name *</Label><Input value={formData.staffName} onChange={(e) => setFormData({ ...formData, staffName: e.target.value })} placeholder="Dr. John Doe" required /></div>
@@ -139,7 +139,7 @@ export default function AdminStaffPage() {
               <div><CardTitle>Staff Members</CardTitle><CardDescription>{staff.length} staff members registered</CardDescription></div>
               <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                 <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Staff</Button></DialogTrigger>
-                <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Add New Staff Member</DialogTitle><DialogDescription>Add a new faculty or admin member</DialogDescription></DialogHeader><StaffForm onSubmit={handleAdd} isEdit={false} /></DialogContent>
+                <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Add New Staff Member</DialogTitle><DialogDescription>Add a new faculty or admin member</DialogDescription></DialogHeader>{renderStaffForm(handleAdd, false)}</DialogContent>
               </Dialog>
             </div>
           </CardHeader>
@@ -147,7 +147,7 @@ export default function AdminStaffPage() {
         </Card>
       </motion.div>
       <Dialog open={!!editingStaff} onOpenChange={(open) => { if (!open) setEditingStaff(null) }}>
-        <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Edit Staff Member</DialogTitle><DialogDescription>Update staff member information</DialogDescription></DialogHeader>{editingStaff && <StaffForm onSubmit={handleEdit} isEdit={true} />}</DialogContent>
+        <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Edit Staff Member</DialogTitle><DialogDescription>Update staff member information</DialogDescription></DialogHeader>{editingStaff && renderStaffForm(handleEdit, true)}</DialogContent>
       </Dialog>
     </div>
   )

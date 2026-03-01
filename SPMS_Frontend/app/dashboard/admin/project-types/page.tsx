@@ -67,7 +67,7 @@ export default function AdminProjectTypesPage() {
     })
   }
 
-  const TypeForm = ({ onSubmit, isEdit }: { onSubmit: (e: React.FormEvent) => void; isEdit?: boolean }) => (
+  const renderTypeForm = (onSubmit: (e: React.FormEvent) => void, isEdit?: boolean) => (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Name *</Label>
@@ -134,7 +134,7 @@ export default function AdminProjectTypesPage() {
                   <DialogTitle>Add Project Type</DialogTitle>
                   <DialogDescription>Create a new project type category</DialogDescription>
                 </DialogHeader>
-                <TypeForm onSubmit={handleAdd} />
+                {renderTypeForm(handleAdd)}
               </DialogContent>
             </Dialog>
           </CardHeader>
@@ -184,7 +184,7 @@ export default function AdminProjectTypesPage() {
               <DialogTitle>Edit Project Type</DialogTitle>
               <DialogDescription>Update project type details</DialogDescription>
             </DialogHeader>
-            <TypeForm onSubmit={handleEdit} isEdit />
+            {renderTypeForm(handleEdit, true)}
           </DialogContent>
         </Dialog>
       </motion.div>

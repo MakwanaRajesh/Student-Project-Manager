@@ -54,7 +54,7 @@ export default function AdminStudentsPage() {
   const openEdit = (s: Student) => { setEditingStudent(s); setFormData({ studentName: s.name, email: s.email, phone: s.phone, description: s.description, password: "", cgpa: s.cgpa.toString() }) }
 
   const columns: ColumnDef<Student>[] = [
-    { accessorKey: "name", header: ({ column }) => <SortableHeader column={column}>Name</SortableHeader>, cell: ({ row }) => (<div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarFallback className="text-xs">{row.original.name.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase()}</AvatarFallback></Avatar><div><p className="font-medium">{row.original.name}</p><p className="text-xs text-muted-foreground">{row.original.description}</p></div></div>) },
+    { accessorKey: "name", header: ({ column }) => <SortableHeader column={column}>Name</SortableHeader>, cell: ({ row }) => (<div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarFallback className="text-xs">{row.original.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()}</AvatarFallback></Avatar><div><p className="font-medium">{row.original.name}</p><p className="text-xs text-muted-foreground">{row.original.description}</p></div></div>) },
     { accessorKey: "email", header: "Email", cell: ({ row }) => (<div className="flex items-center gap-2"><Mail className="h-3 w-3 text-muted-foreground" /><span className="text-sm">{row.original.email}</span></div>) },
     { accessorKey: "phone", header: "Phone", cell: ({ row }) => (<div className="flex items-center gap-2"><Phone className="h-3 w-3 text-muted-foreground" /><span className="text-sm">{row.original.phone || "-"}</span></div>) },
     { accessorKey: "cgpa", header: ({ column }) => <SortableHeader column={column}>CGPA</SortableHeader>, cell: ({ row }) => { const cgpa = row.original.cgpa; return <Badge variant={cgpa >= 8.5 ? "default" : cgpa >= 7 ? "secondary" : "destructive"}>{cgpa.toFixed(2)}</Badge> } },
@@ -62,7 +62,7 @@ export default function AdminStudentsPage() {
     { id: "actions", header: "Actions", cell: ({ row }) => (<div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => openEdit(row.original)} className="h-8 w-8 p-0"><Edit2 className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)} className="h-8 w-8 p-0 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>) },
   ]
 
-  const Form = ({ onSubmit, isEdit }: { onSubmit: (e: React.FormEvent) => void; isEdit: boolean }) => (
+  const renderForm = (onSubmit: (e: React.FormEvent) => void, isEdit: boolean) => (
     <form onSubmit={onSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2"><Label>Full Name *</Label><Input value={formData.studentName} onChange={e => setFormData({ ...formData, studentName: e.target.value })} placeholder="John Smith" required /></div>
@@ -91,7 +91,7 @@ export default function AdminStudentsPage() {
               <div><CardTitle>Students</CardTitle><CardDescription>{students.length} students registered</CardDescription></div>
               <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                 <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Add Student</Button></DialogTrigger>
-                <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Add Student</DialogTitle><DialogDescription>Register a new student</DialogDescription></DialogHeader><Form onSubmit={handleAdd} isEdit={false} /></DialogContent>
+                <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Add Student</DialogTitle><DialogDescription>Register a new student</DialogDescription></DialogHeader>{renderForm(handleAdd, false)}</DialogContent>
               </Dialog>
             </div>
           </CardHeader>
@@ -99,7 +99,7 @@ export default function AdminStudentsPage() {
         </Card>
       </motion.div>
       <Dialog open={!!editingStudent} onOpenChange={open => { if (!open) setEditingStudent(null) }}>
-        <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Edit Student</DialogTitle><DialogDescription>Update student information</DialogDescription></DialogHeader>{editingStudent && <Form onSubmit={handleEdit} isEdit={true} />}</DialogContent>
+        <DialogContent className="max-w-lg"><DialogHeader><DialogTitle>Edit Student</DialogTitle><DialogDescription>Update student information</DialogDescription></DialogHeader>{editingStudent && renderForm(handleEdit, true)}</DialogContent>
       </Dialog>
     </div>
   )
