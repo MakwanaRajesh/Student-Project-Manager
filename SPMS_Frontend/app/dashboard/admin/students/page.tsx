@@ -16,6 +16,32 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useAppStore, type Student } from "@/lib/store"
 import { toast } from "sonner"
 import type { ColumnDef } from "@tanstack/react-table"
+// import {
+//   AlertDialog,
+//   AlertDialogAction,
+//   AlertDialogCancel,
+//   AlertDialogContent,
+//   AlertDialogDescription,
+//   AlertDialogFooter,
+//   AlertDialogHeader,
+//   AlertDialogTitle,
+//   AlertDialogTrigger,
+// } from "@/components/ui/alert-dialog"
+// import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Trash2Icon } from "lucide-react"
+
+
 
 export default function AdminStudentsPage() {
   const { students, projectGroups, addStudent, updateStudent, deleteStudent } = useAppStore()
@@ -59,7 +85,57 @@ export default function AdminStudentsPage() {
     { accessorKey: "phone", header: "Phone", cell: ({ row }) => (<div className="flex items-center gap-2"><Phone className="h-3 w-3 text-muted-foreground" /><span className="text-sm">{row.original.phone || "-"}</span></div>) },
     { accessorKey: "cgpa", header: ({ column }) => <SortableHeader column={column}>CGPA</SortableHeader>, cell: ({ row }) => { const cgpa = row.original.cgpa; return <Badge variant={cgpa >= 8.5 ? "default" : cgpa >= 7 ? "secondary" : "destructive"}>{cgpa.toFixed(2)}</Badge> } },
     { id: "groups", header: "Groups", cell: ({ row }) => { const count = projectGroups.filter(g => g.members.some(m => m.studentId === row.original.id)).length; return <span className="text-sm">{count}</span> } },
-    { id: "actions", header: "Actions", cell: ({ row }) => (<div className="flex gap-2"><Button variant="ghost" size="sm" onClick={() => openEdit(row.original)} className="h-8 w-8 p-0"><Edit2 className="h-4 w-4" /></Button><Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)} className="h-8 w-8 p-0 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>) },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+
+          {/* Edit Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => openEdit(row.original)}
+            className="h-8 w-8 p-0"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+
+          {/* Delete Confirmation Dialog */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Student?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the student.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDelete(row.original.id)}
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+        </div>
+      ),
+    }
   ]
 
   const renderForm = (onSubmit: (e: React.FormEvent) => void, isEdit: boolean) => (

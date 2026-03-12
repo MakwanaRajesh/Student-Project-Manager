@@ -29,13 +29,13 @@ namespace SPMS_Backend.Helpers
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var expires = int.TryParse(_config["Jwt:ExpiresInHours"], out int hours) ? hours : 8;
+            var expires = int.TryParse(_config["Jwt:ExpiresInMinutes"], out int mins) ? mins : 8;
 
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(expires),
+                expires: DateTime.UtcNow.AddMinutes(expires),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);

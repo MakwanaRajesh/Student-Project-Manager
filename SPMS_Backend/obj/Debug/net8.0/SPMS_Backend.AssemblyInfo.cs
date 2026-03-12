@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SPMS_Backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6d4a08ebe495e88e787edd4d37cbd2793077aec9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1d55edb05cfc1b5f0369496214b07a6f4fa686d9")]
 [assembly: System.Reflection.AssemblyProductAttribute("SPMS_Backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SPMS_Backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

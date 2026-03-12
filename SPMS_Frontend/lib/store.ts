@@ -1,7 +1,7 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { persist, createJSONStorage } from "zustand/middleware"
 import {
   authApi,
   staffApi,
@@ -234,12 +234,12 @@ export const useAppStore = create<AppState>()(
         set({ dataLoaded: true })
       },
 
-      loadProjectTypes: async () => { try { set({ projectTypes: (await projectTypesApi.getAll()).map(toProjectType) }) } catch {} },
-      loadStaff: async () => { try { set({ staff: (await staffApi.getAll()).map(toStaff) }) } catch {} },
-      loadStudents: async () => { try { set({ students: (await studentsApi.getAll()).map(toStudent) }) } catch {} },
-      loadProjectGroups: async () => { try { set({ projectGroups: (await projectGroupsApi.getAll()).map(toProjectGroup) }) } catch {} },
-      loadMeetings: async () => { try { set({ meetings: (await meetingsApi.getAll()).map(toMeeting) }) } catch {} },
-      loadDashboardStats: async () => { try { set({ dashboardStats: await reportsApi.getDashboardStats() }) } catch {} },
+      loadProjectTypes: async () => { try { set({ projectTypes: (await projectTypesApi.getAll()).map(toProjectType) }) } catch { } },
+      loadStaff: async () => { try { set({ staff: (await staffApi.getAll()).map(toStaff) }) } catch { } },
+      loadStudents: async () => { try { set({ students: (await studentsApi.getAll()).map(toStudent) }) } catch { } },
+      loadProjectGroups: async () => { try { set({ projectGroups: (await projectGroupsApi.getAll()).map(toProjectGroup) }) } catch { } },
+      loadMeetings: async () => { try { set({ meetings: (await meetingsApi.getAll()).map(toMeeting) }) } catch { } },
+      loadDashboardStats: async () => { try { set({ dashboardStats: await reportsApi.getDashboardStats() }) } catch { } },
 
       addProjectType: async (data) => { const r = await projectTypesApi.create(data); set(s => ({ projectTypes: [...s.projectTypes, toProjectType(r)] })) },
       updateProjectType: async (id, data) => { const r = await projectTypesApi.update(parseInt(id), data); set(s => ({ projectTypes: s.projectTypes.map(pt => pt.id === id ? toProjectType(r) : pt) })) },
@@ -260,14 +260,19 @@ export const useAppStore = create<AppState>()(
       rejectProjectGroup: async (id, desc) => { await projectGroupsApi.updateStatus(parseInt(id), "rejected", desc); set(s => ({ projectGroups: s.projectGroups.map(g => g.id === id ? { ...g, status: "rejected" as const, statusDescription: desc } : g) })) },
 
       addMeeting: async (data) => { await meetingsApi.create(data); const all = await meetingsApi.getAll(); set({ meetings: all.map(toMeeting) }) },
-      updateMeeting: async (id, data) => { await meetingsApi.update(parseInt(id), data); set(s => ({ meetings: s.meetings.map(m => m.id === id ? { ...m, ...(data.meetingDateTime && { dateTime: new Date(data.meetingDateTime) }), ...(data.meetingPurpose && { purpose: data.meetingPurpose }), ...(data.meetingStatus && { status: data.meetingStatus as "scheduled"|"completed"|"cancelled" }) } : m) })) },
+      updateMeeting: async (id, data) => { await meetingsApi.update(parseInt(id), data); set(s => ({ meetings: s.meetings.map(m => m.id === id ? { ...m, ...(data.meetingDateTime && { dateTime: new Date(data.meetingDateTime) }), ...(data.meetingPurpose && { purpose: data.meetingPurpose }), ...(data.meetingStatus && { status: data.meetingStatus as "scheduled" | "completed" | "cancelled" }) } : m) })) },
       deleteMeeting: async (id) => { await meetingsApi.delete(parseInt(id)); set(s => ({ meetings: s.meetings.filter(m => m.id !== id) })) },
       updateAttendance: async (meetingId, attendances) => { await attendanceApi.updateAttendance(parseInt(meetingId), attendances); const all = await meetingsApi.getAll(); set({ meetings: all.map(toMeeting) }) },
     }),
-    { name: "spms-storage", partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated, token: state.token, }), onRehydrateStorage: () => (state) => {
-    if (state?.token) {
-      setToken(state.token) // 🔥 Restore JWT header
+    {
+      name: "spms-storage",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated, token: state.token, }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          setToken(state.token) // 🔥 Restore JWT header
+        }
+      },
     }
-  }, }
   )
 )

@@ -6,15 +6,15 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"
 // ===== Token Management =====
 export function getToken(): string | null {
   if (typeof window === "undefined") return null
-  return localStorage.getItem("spms_token")
+  return sessionStorage.getItem("spms_token")
 }
 
 export function setToken(token: string): void {
-  localStorage.setItem("spms_token", token)
+  sessionStorage.setItem("spms_token", token)
 }
 
 export function removeToken(): void {
-  localStorage.removeItem("spms_token")
+  sessionStorage.removeItem("spms_token")
 }
 
 // ===== HTTP Client =====

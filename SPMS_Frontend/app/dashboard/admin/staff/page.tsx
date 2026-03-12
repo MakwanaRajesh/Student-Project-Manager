@@ -16,6 +16,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAppStore, type Staff } from "@/lib/store"
 import { toast } from "sonner"
 import type { ColumnDef } from "@tanstack/react-table"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Trash2Icon } from "lucide-react"
 
 export default function AdminStaffPage() {
   const { staff, projectGroups, addStaff, updateStaff, deleteStaff } = useAppStore()
@@ -93,12 +105,63 @@ export default function AdminStaffPage() {
         return <span className="text-sm font-medium">{count}</span>
       },
     },
+    // {
+    //   id: "actions", header: "Actions",
+    //   cell: ({ row }) => (
+    //     <div className="flex items-center gap-2">
+    //       <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)} className="h-8 w-8 p-0"><Edit2 className="h-4 w-4" /></Button>
+    //       <Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+    //     </div>
+    //   ),
+    // },
     {
-      id: "actions", header: "Actions",
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => openEdit(row.original)} className="h-8 w-8 p-0"><Edit2 className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="sm" onClick={() => handleDelete(row.original.id)} className="h-8 w-8 p-0 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+        <div className="flex gap-2">
+
+          {/* Edit Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDelete(row.original.id)}
+            className="h-8 w-8 p-0"
+          >
+            <Edit2 className="h-4 w-4" />
+          </Button>
+
+          {/* Delete Confirmation Dialog */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Student?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the Staff.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDelete(row.original.id)}
+                  className="bg-destructive text-white hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
         </div>
       ),
     },
